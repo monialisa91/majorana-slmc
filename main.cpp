@@ -13,7 +13,7 @@ int main() {
     double t, delta, alphay, alphaz, Bx, Bz, cp, temp, J_spin, gamma_N, phi, disorder;
     bool magnetic_disorder;
     temp = 1.0;
-    lx = 50; // dlugosc lancucha
+    lx = 3; // dlugosc lancucha
     ly = 2; // drugi wymiar
     delta = 0.27;
     alphay = 0;	// Rashba SOC w kierunku y
@@ -36,10 +36,9 @@ int main() {
     }
 
     cx_mat test;
-    test = hamiltonian(300, 2, cp, t, delta, J_spin, ang_xy);
-    test.print();
+    test = hamiltonian(lx, ly, cp, t, delta, J_spin, ang_xy);
 
-
+    cout << IsHermitian(test, n) << endl;
 
 
 

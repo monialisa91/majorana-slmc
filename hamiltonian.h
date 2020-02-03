@@ -83,18 +83,69 @@ cx_mat hamiltonian(int lx, int ly, double mu, double t, double delta, double J_s
     return ham;
 }
 
+bool IsHermitian(cx_mat matrix, int n) {
+    for(int i=0; i<4*n; i++) {
+        for(int j=0; j<4*n; j++) {
+            if(matrix(i,j) != conj(matrix(j, i))) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
 
-double energy(cx_mat ham, double beta, double cp) {
+
+double energy(cx_mat ham, double beta, double mu) {
     int n = ham.n_rows;
     vec eigval;
     eig_sym(eigval, ham);
     double T = 1.0/beta;
     double E = 0;
     for(int i=0; i<4*n; i++) {
-        E += log(1+exp(-beta*(eigval(i)-cp)));
+        E += log(1+exp(-beta*(eigval(i)-mu)));
     }
     return -T*E;
 
+}
+
+cx_mat MC (int steps, vec ang_xy_init, int lx, int ly, double beta, double mu, double t, double delta, double J_spin) {
+       cx_mat ham_init = hamiltonian(lx, ly, mu, t, delta, J_spin, ang_xy_init);
+       double E0 = energy(ham_init, beta, mu);
+       double E_new;
+       double r, r1, r2;
+       double delta_En;
+       int site;
+       int n = lx*ly;
+       double new_angle;
+       vec ang_xy_new;
+       cx_mat new_ham;
+
+       for(int i=0; i<steps; i++) {
+           ang_xy_new = ang_xy_init;
+           // random site
+           r = ((double) rand() / (RAND_MAX));
+           site = (int) n*r;
+           r1 = ((double) rand() / (RAND_MAX));
+           new_angle = 2*M_PI*r1;
+           ang_xy_new(site) = new_angle;
+           new_ham = hamiltonian(lx, ly, mu, t, delta, J_spin, ang_xy_new);
+           E_new = energy(new_ham, beta, mu);
+           delta_En = E_new - E0;
+
+           if(delta_En < 0) {
+               E0 = E_new;
+               ham_init = new_ham;
+           }
+           else {
+               r2 = ((double) rand() / (RAND_MAX));
+               if(r2 > exp(-beta*delta_En)) {
+                   E0 = E_new;
+                   ham_init = new_ham;
+               }
+           }
+
+       }
+       return ham_init;
 }
 
 
